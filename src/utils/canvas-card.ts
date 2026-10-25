@@ -6,6 +6,13 @@ export interface CouponCardData {
   expiresAt: string;
 }
 
+export interface GeneratedOfferCard {
+  blob: Blob;
+  dataUrl: string;
+  file: File;
+  fileName: string;
+}
+
 /**
  * Formats ISO timestamp to readable IST string
  */
@@ -76,10 +83,10 @@ function roundRect(
 }
 
 /**
- * Generates 1080x1350 PNG offer card blob
+ * Generates 1080x1350 PNG offer card with blob, dataUrl, and File object
  */
-export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob> {
-  // Wait for web fonts to load
+export async function generateOfferCard(data: CouponCardData): Promise<GeneratedOfferCard> {
+  // Wait for web fonts if possible
   try {
     if (document.fonts) {
       await Promise.all([
@@ -90,7 +97,7 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
       ]);
     }
   } catch {
-    // Continue if font load API unavailable
+    // Continue
   }
 
   const canvas = document.createElement('canvas');
@@ -119,19 +126,21 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
   // 3. Logo at top (or Fredoka wordmark fallback)
   try {
     const logoImg = new Image();
-    logoImg.crossOrigin = 'anonymous';
     logoImg.src = '/logo.png';
-    await new Promise<void>((resolve, reject) => {
-      logoImg.onload = () => resolve();
-      logoImg.onerror = () => reject();
-      setTimeout(reject, 600); // 600ms timeout for logo fetch
-    });
-    const maxLogoHeight = 110;
-    const aspect = logoImg.width / logoImg.height;
-    const logoWidth = Math.min(420, maxLogoHeight * aspect);
-    const logoHeight = logoWidth / aspect;
-    ctx.drawImage(logoImg, (1080 - logoWidth) / 2, currentY - 30, logoWidth, logoHeight);
-    currentY += 130;
+    if (!logoImg.complete) {
+      await new Promise<void>((resolve) => {
+        logoImg.onload = () => resolve();
+        logoImg.onerror = () => resolve();
+        setTimeout(resolve, 800);
+      });
+    }
+    if (logoImg.naturalWidth > 0) {
+      const logoSize = 130;
+      ctx.drawImage(logoImg, (1080 - logoSize) / 2, currentY - 20, logoSize, logoSize);
+      currentY += 140;
+    } else {
+      throw new Error('Fallback to text');
+    }
   } catch {
     // Wordmark fallback
     ctx.fillStyle = COLOR_PINK;
@@ -149,29 +158,29 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
   ctx.lineWidth = 6;
   ctx.setLineDash([]);
   ctx.stroke();
-  currentY += 100;
+  currentY += 90;
 
   // 5. "Congratulations!" (Fredoka)
   ctx.fillStyle = COLOR_INK;
   ctx.font = 'bold 58px Fredoka, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Congratulations!', 540, currentY);
-  currentY += 80;
+  currentY += 75;
 
   // 6. Offer Number Badge (e.g. "OFFER 1")
   const offerNumberLabel = data.offerSlot ? `OFFER ${data.offerSlot}` : 'SPECIAL OFFER';
   ctx.fillStyle = COLOR_PINK;
   ctx.font = 'bold 64px Fredoka, sans-serif';
   ctx.fillText(offerNumberLabel, 540, currentY);
-  currentY += 80;
+  currentY += 75;
 
   // 7. Offer Title (Large in Ink)
   ctx.fillStyle = COLOR_INK;
-  ctx.font = 'bold 60px Fredoka, sans-serif';
+  ctx.font = 'bold 56px Fredoka, sans-serif';
   const titleLines = wrapText(ctx, data.offerTitle, 860);
   for (const line of titleLines) {
     ctx.fillText(line, 540, currentY);
-    currentY += 72;
+    currentY += 68;
   }
   currentY += 16;
 
@@ -208,7 +217,7 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
   ctx.font = 'bold 28px Nunito, sans-serif';
   ctx.fillText('TO CLAIM YOUR CELEBRATION OFFER', 540, boxY + 110);
 
-  currentY += boxHeight + 60;
+  currentY += boxHeight + 50;
 
   // 10. "Valid till <date>"
   ctx.fillStyle = COLOR_INK;
@@ -220,61 +229,48 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
   ctx.font = 'bold 36px Fredoka, sans-serif';
   ctx.fillText("Cravory's 1st anniversary", 540, 1270);
 
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) resolve(blob);
-      else reject(new Error('Failed to generate image blob'));
-    }, 'image/png');
-  });
+  // Convert to dataUrl & blob safely
+  const dataUrl = canvas.toDataURL('image/png');
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)![1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  const blob = new Blob([u8arr], { type: mime });
+  const fileName = data.offerSlot ? `cravory-offer-${data.offerSlot}.png` : 'cravory-anniversary-offer.png';
+  let file: File;
+  try {
+    file = new File([blob], fileName, { type: 'image/png' });
+  } catch {
+    file = blob as any;
+  }
+
+  return { blob, dataUrl, file, fileName };
 }
 
 /**
- * Handles image delivery following the exact required priority order:
- * 1. Web Share API with file (iOS "Save Image")
- * 2. <a download>
- * 3. Fallback: open image in new tab with hint
+ * Triggers direct browser download via <a> tag
  */
-export async function deliverOfferImage(data: CouponCardData): Promise<{ method: 'share' | 'download' | 'tab' }> {
-  const blob = await generateOfferCardBlob(data);
-  const fileName = data.offerSlot ? `cravory-offer-${data.offerSlot}.png` : (data.code ? `cravory-offer-${data.code}.png` : 'cravory-anniversary-offer.png');
-  const file = new File([blob], fileName, { type: 'image/png' });
-
-  // 1. Web Share API
-  if (
-    typeof navigator !== 'undefined' &&
-    typeof navigator.canShare === 'function' &&
-    navigator.canShare({ files: [file] })
-  ) {
-    try {
-      await navigator.share({
-        files: [file],
-        title: 'Cravory 1st Anniversary Offer',
-        text: `My Cravory Anniversary Offer: ${data.offerTitle} (${data.code})`,
-      });
-      return { method: 'share' };
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        return { method: 'share' };
-      }
-      // If sharing failed for reasons other than user cancellation, fallback to download
-    }
-  }
-
-  // 2. <a download>
+export function triggerDirectDownload(card: GeneratedOfferCard) {
   try {
-    const objectUrl = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(card.blob);
     const link = document.createElement('a');
     link.href = objectUrl;
-    link.download = fileName;
+    link.download = card.fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
-    return { method: 'download' };
   } catch {
-    // 3. Fallback: Open image in new tab
-    const objectUrl = URL.createObjectURL(blob);
-    window.open(objectUrl, '_blank');
-    return { method: 'tab' };
+    // If blob object URL fails, fallback to direct dataUrl
+    const link = document.createElement('a');
+    link.href = card.dataUrl;
+    link.download = card.fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }
