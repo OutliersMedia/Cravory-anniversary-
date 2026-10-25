@@ -137,7 +137,7 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
     ctx.fillStyle = COLOR_PINK;
     ctx.font = 'bold 84px Fredoka, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Cravery', 540, currentY + 30);
+    ctx.fillText('Cravory', 540, currentY + 30);
     currentY += 130;
   }
 
@@ -202,7 +202,7 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
   ctx.fillStyle = COLOR_PINK;
   ctx.font = 'bold 40px Fredoka, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('SHOW THIS AT THE CRAVERY COUNTER', 540, boxY + 65);
+  ctx.fillText('SHOW THIS AT THE CRAVORY COUNTER', 540, boxY + 65);
 
   ctx.fillStyle = COLOR_INK;
   ctx.font = 'bold 28px Nunito, sans-serif';
@@ -215,10 +215,10 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
   ctx.font = 'bold 32px Nunito, sans-serif';
   ctx.fillText(`Valid till ${formatIstDate(data.expiresAt)}  •  1 offer per bill`, 540, currentY);
 
-  // 11. "Cravery's 1st anniversary" at the bottom
+  // 11. "Cravory's 1st anniversary" at the bottom
   ctx.fillStyle = COLOR_PINK;
   ctx.font = 'bold 36px Fredoka, sans-serif';
-  ctx.fillText("Cravery's 1st anniversary", 540, 1270);
+  ctx.fillText("Cravory's 1st anniversary", 540, 1270);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -236,7 +236,7 @@ export async function generateOfferCardBlob(data: CouponCardData): Promise<Blob>
  */
 export async function deliverOfferImage(data: CouponCardData): Promise<{ method: 'share' | 'download' | 'tab' }> {
   const blob = await generateOfferCardBlob(data);
-  const fileName = data.offerSlot ? `cravery-offer-${data.offerSlot}.png` : (data.code ? `cravery-offer-${data.code}.png` : 'cravery-anniversary-offer.png');
+  const fileName = data.offerSlot ? `cravory-offer-${data.offerSlot}.png` : (data.code ? `cravory-offer-${data.code}.png` : 'cravory-anniversary-offer.png');
   const file = new File([blob], fileName, { type: 'image/png' });
 
   // 1. Web Share API
@@ -248,8 +248,8 @@ export async function deliverOfferImage(data: CouponCardData): Promise<{ method:
     try {
       await navigator.share({
         files: [file],
-        title: 'Cravery 1st Anniversary Offer',
-        text: `My Cravery Anniversary Offer: ${data.offerTitle} (${data.code})`,
+        title: 'Cravory 1st Anniversary Offer',
+        text: `My Cravory Anniversary Offer: ${data.offerTitle} (${data.code})`,
       });
       return { method: 'share' };
     } catch (err: any) {

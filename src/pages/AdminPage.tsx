@@ -298,7 +298,7 @@ export const AdminPage: React.FC = () => {
     return (
       <div className="admin-shell" style={{ maxWidth: 400, marginTop: 40 }}>
         <div className="admin-card">
-          <h2 style={{ fontFamily: 'var(--font-heading)', marginBottom: 16 }}>Cravery Admin Login</h2>
+          <h2 style={{ fontFamily: 'var(--font-heading)', marginBottom: 16 }}>Cravory Admin Login</h2>
           <form onSubmit={handleLogin}>
             <label style={{ fontSize: 14 }}>Enter Admin Password</label>
             <input
@@ -323,7 +323,7 @@ export const AdminPage: React.FC = () => {
     <div className="admin-shell">
       <div className="admin-header">
         <div>
-          <h1>Cravery Administration</h1>
+          <h1>Cravory Administration</h1>
           <span style={{ fontSize: 13, color: '#666' }}>1st Anniversary Campaign Management</span>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>

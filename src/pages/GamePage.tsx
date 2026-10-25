@@ -215,6 +215,19 @@ export const GamePage: React.FC = () => {
         errorMessage={errorMessage}
       />
 
+      {/* Customer Page Instagram Link */}
+      <footer className="customer-footer">
+        <span>Follow us on </span>
+        <a
+          href="https://www.instagram.com/cravoryofficial/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="instagram-link"
+        >
+          @cravoryofficial
+        </a>
+      </footer>
+
       {/* Slide-Up Result Panel */}
       {showResultPanel && (
         <ResultPanel

@@ -9,17 +9,17 @@ export const Header: React.FC = () => {
         {!logoFailed ? (
           <img
             src="/logo.png"
-            alt="Cravery"
+            alt="Cravory"
             className="logo-img"
             onError={() => setLogoFailed(true)}
           />
         ) : (
-          <span className="wordmark-logo">Cravery</span>
+          <span className="wordmark-logo">CRAVORY</span>
         )}
       </div>
 
       <h1 className="anniversary-heading">
-        Cravery turns <span className="highlight-one">1</span>
+        Cravory Turns <span className="highlight-one">One!!!</span>
       </h1>
 
       <p className="anniversary-subtext">Spin the wheel and win an offer.</p>

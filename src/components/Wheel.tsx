@@ -262,27 +262,29 @@ export const Wheel: React.FC<WheelProps> = ({
             />
           </g>
 
-          {/* Center Hub: White circle with Pink ring and Logo / "C" */}
+          {/* Center Hub: Circular Logo with Pink Ring */}
+          <defs>
+            <clipPath id="wheel-hub-clip">
+              <circle cx={CENTER_X} cy={CENTER_Y} r="42" />
+            </clipPath>
+          </defs>
           <circle
             cx={CENTER_X}
             cy={CENTER_Y}
             r="44"
             fill="#FFFFFF"
             stroke="#FF4FA3"
-            strokeWidth="6"
+            strokeWidth="5"
           />
-          <text
-            x={CENTER_X}
-            y={CENTER_Y + 13}
-            fill="#FF4FA3"
-            fontFamily="Fredoka, sans-serif"
-            fontSize="38"
-            fontWeight="700"
-            textAnchor="middle"
-            pointerEvents="none"
-          >
-            C
-          </text>
+          <image
+            href="/logo.png"
+            x={CENTER_X - 42}
+            y={CENTER_Y - 42}
+            width="84"
+            height="84"
+            clipPath="url(#wheel-hub-clip)"
+            preserveAspectRatio="xMidYMid meet"
+          />
         </svg>
       </div>
     </div>

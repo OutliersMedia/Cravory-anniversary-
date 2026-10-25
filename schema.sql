@@ -174,7 +174,7 @@ BEGIN
       'outcome', v_existing_spin.outcome,
       'offer', CASE WHEN v_existing_spin.offer_slot IS NOT NULL THEN jsonb_build_object(
         'slot', v_existing_spin.offer_slot,
-        'title', COALESCE(v_existing_spin.coupon_offer_title, 'Cravery Offer'),
+        'title', COALESCE(v_existing_spin.coupon_offer_title, 'Cravory Offer'),
         'description', COALESCE(v_existing_spin.coupon_offer_desc, '')
       ) ELSE NULL END,
       'coupon', CASE WHEN v_existing_spin.coupon_code IS NOT NULL THEN jsonb_build_object(

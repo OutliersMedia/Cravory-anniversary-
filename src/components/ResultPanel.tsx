@@ -100,7 +100,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
               fontWeight: 'bold',
               color: 'var(--color-ink)',
             }}>
-              Show this screen or saved image at the Cravery counter to claim
+              Show this screen or saved image at the Cravory counter to claim
             </div>
 
             {coupon && (

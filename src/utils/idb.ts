@@ -1,6 +1,6 @@
 // Minimal, zero-dependency IndexedDB helper for token persistence across cookie/storage clearing
 
-const DB_NAME = 'cravery_store';
+const DB_NAME = 'cravory_store';
 const STORE_NAME = 'identity';
 const TOKEN_KEY = 'device_token';
 

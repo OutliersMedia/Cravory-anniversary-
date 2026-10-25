@@ -66,9 +66,10 @@ html, body {
 }
 
 .logo-img {
-  max-height: 48px;
-  max-width: 180px;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
+  display: block;
 }
 
 .wordmark-logo {
@@ -469,6 +470,35 @@ html, body {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* ==========================================
+   Customer Footer & Instagram
+   ========================================== */
+.customer-footer {
+  margin-top: 14px;
+  margin-bottom: 6px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.instagram-link {
+  color: var(--color-pink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.instagram-link:hover, .instagram-link:active {
+  opacity: 0.85;
 }
 
 /* ==========================================

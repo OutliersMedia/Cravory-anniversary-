@@ -8,7 +8,7 @@ export const BlockedScreen: React.FC<BlockedScreenProps> = ({ refCode }) => {
   return (
     <div className="blocked-container">
       <p className="blocked-copy">
-        This phone has already played. If this is a mistake, show this code at the Cravery counter:
+        This phone has already played. If this is a mistake, show this code at the Cravory counter:
       </p>
 
       {refCode && (
