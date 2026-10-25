@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
+import { GamePhase } from '../../api/_lib/types.js';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  phase?: GamePhase;
+}
+
+export const Header: React.FC<HeaderProps> = ({ phase }) => {
   const [logoFailed, setLogoFailed] = useState(false);
 
   return (
@@ -22,7 +27,11 @@ export const Header: React.FC = () => {
         Cravory Turns <span className="highlight-one">One!!!</span>
       </h1>
 
-      <p className="anniversary-subtext">Spin the wheel and win an offer.</p>
+      <p className="anniversary-subtext">
+        {phase === 'before_start'
+          ? 'The offer will start on 1 Nov'
+          : 'Spin the wheel and win an offer.'}
+      </p>
     </header>
   );
 };

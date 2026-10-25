@@ -193,8 +193,8 @@ export const GamePage: React.FC = () => {
 
   return (
     <main className="app-shell">
-      {/* Header with Cravery Logo / Wordmark and Title */}
-      <Header />
+      {/* Header with Cravory Logo / Wordmark and Title */}
+      <Header phase={phase} />
 
       {/* Hero Wheel */}
       <Wheel

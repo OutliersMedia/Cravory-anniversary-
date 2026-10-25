@@ -41,7 +41,9 @@ export const SpinButton: React.FC<SpinButtonProps> = ({
 
   // Exact helper text logic
   let helperText = '1 spin. Miss it? You get one more try.';
-  if (phase === 'paused') {
+  if (phase === 'before_start') {
+    helperText = 'The offer will start on 1 Nov';
+  } else if (phase === 'paused') {
     helperText = 'The celebration is temporarily paused. Please check back shortly.';
   } else if (spinsUsed === 1) {
     helperText = '1 more chance.';

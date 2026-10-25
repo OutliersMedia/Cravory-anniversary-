@@ -712,14 +712,18 @@ export const AdminPage: React.FC = () => {
                 let statusBg = '#D1FAE5';
                 let statusColor = '#065F46';
 
-                if (startDate && now < startDate) {
-                  statusText = `SCHEDULED (Opens on ${startDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST)`;
+                if (startDate && startDate.getFullYear() >= 2090) {
+                  statusText = 'PAUSED (Campaign is temporarily paused)';
                   statusBg = '#FEF3C7';
                   statusColor = '#92400E';
                 } else if (endDate && now > endDate) {
-                  statusText = `ENDED (Closed on ${endDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST)`;
+                  statusText = `ENDED / CANCELLED (Closed on ${endDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST)`;
                   statusBg = '#FEE2E2';
                   statusColor = '#991B1B';
+                } else if (startDate && now < startDate) {
+                  statusText = `SCHEDULED (The offer will start on 1 Nov - ${startDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST)`;
+                  statusBg = '#E0E7FF';
+                  statusColor = '#3730A3';
                 }
 
                 return (
