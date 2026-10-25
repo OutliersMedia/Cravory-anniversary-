@@ -35,10 +35,6 @@
   ],
   "rewrites": [
     {
-      "source": "/api/admin/:action",
-      "destination": "/api/admin/[action]"
-    },
-    {
       "source": "/admin(.*)",
       "destination": "/index.html"
     }

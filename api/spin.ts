@@ -57,6 +57,25 @@ export default async function handler(req: any, res: any) {
 
   const verified = rawToken ? await verifyDeviceToken(rawToken) : null;
 
+  const db = getDb();
+
+  // Enforce campaign status even for admin test mode so buttons can be verified
+  const { data: settingsRow } = await db.from('settings').select('*').eq('id', 1).maybeSingle();
+  if (settingsRow) {
+    const sTime = new Date(settingsRow.start_at);
+    const eTime = settingsRow.end_at ? new Date(settingsRow.end_at) : null;
+    const nTime = new Date();
+    if (sTime.getFullYear() >= 2090) {
+      return res.status(403).json({ error: 'Campaign is temporarily paused' });
+    }
+    if (eTime && nTime > eTime) {
+      return res.status(403).json({ error: 'This offer has ended' });
+    }
+    if (nTime < sTime) {
+      return res.status(403).json({ error: 'Opens on 1 November' });
+    }
+  }
+
   // If in test mode, allow dry run even without an active player
   if (isTestMode) {
     const testSegments = [0, 1, 2, 3, 4, 5, 6];
@@ -91,8 +110,6 @@ export default async function handler(req: any, res: any) {
   if (!verified) {
     return res.status(401).json({ error: 'Unauthorized. Please refresh the page.' });
   }
-
-  const db = getDb();
 
   // 5. Generate secure parameters in Node using crypto
   const pRand = getSecureRandomFloat();

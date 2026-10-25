@@ -32,6 +32,8 @@ export const AdminPage: React.FC = () => {
 
   // Dashboard Data
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [campaignStatus, setCampaignStatus] = useState<string>('live');
+  const [campaignActionMsg, setCampaignActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Offers Data
   const [offersData, setOffersData] = useState<any>(null);
@@ -73,6 +75,9 @@ export const AdminPage: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setDashboardData(data);
+        if (data.campaignStatus) {
+          setCampaignStatus(data.campaignStatus);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -223,6 +228,7 @@ export const AdminPage: React.FC = () => {
 
   // Handle Campaign Action: Start / Pause / Cancel
   const handleCampaignAction = async (actionCmd: 'start' | 'pause' | 'cancel') => {
+    setCampaignActionMsg(null);
     try {
       const res = await fetch('/api/admin/campaign-action', {
         method: 'POST',
@@ -231,14 +237,14 @@ export const AdminPage: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
-        loadSettings();
-        loadDashboard();
+        setCampaignActionMsg({ type: 'success', text: data.message });
+        setCampaignStatus(data.status === 'active' ? 'live' : data.status);
+        await Promise.all([loadSettings(), loadDashboard()]);
       } else {
-        alert(data.error || 'Failed to update campaign state');
+        setCampaignActionMsg({ type: 'error', text: data.error || 'Failed to update campaign state' });
       }
     } catch {
-      alert('Network error while updating campaign');
+      setCampaignActionMsg({ type: 'error', text: 'Network error while updating campaign' });
     }
   };
 
@@ -343,18 +349,98 @@ export const AdminPage: React.FC = () => {
         padding: '12px 16px',
         marginBottom: 16,
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
+        flexDirection: 'column',
         gap: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, fontWeight: 'bold' }}>CAMPAIGN CONTROLS:</span>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 'bold' }}>CAMPAIGN CONTROLS:</span>
+            <span style={{
+              padding: '3px 8px',
+              borderRadius: 4,
+              fontSize: 12,
+              fontWeight: 'bold',
+              backgroundColor:
+                campaignStatus === 'live' ? '#DCFCE7' :
+                campaignStatus === 'paused' ? '#FEF3C7' :
+                campaignStatus === 'cancelled' ? '#FEE2E2' : '#E0E7FF',
+              color:
+                campaignStatus === 'live' ? '#166534' :
+                campaignStatus === 'paused' ? '#92400E' :
+                campaignStatus === 'cancelled' ? '#991B1B' : '#3730A3',
+              border: '1px solid currentColor',
+              textTransform: 'uppercase',
+            }}>
+              STATUS: {campaignStatus}
+            </span>
+
+            <button
+              type="button"
+              style={{
+                padding: '7px 14px',
+                background: '#10B981',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: 13,
+                outline: campaignStatus === 'live' ? '2px solid #059669' : 'none',
+              }}
+              onClick={() => handleCampaignAction('start')}
+              title="Start campaign immediately (live for customers)"
+            >
+              ▶ Start Campaign
+            </button>
+            <button
+              type="button"
+              style={{
+                padding: '7px 14px',
+                background: '#F59E0B',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: 13,
+                outline: campaignStatus === 'paused' ? '2px solid #D97706' : 'none',
+              }}
+              onClick={() => handleCampaignAction('pause')}
+              title="Temporarily pause spinning for customers"
+            >
+              ⏸ Pause Campaign
+            </button>
+            <button
+              type="button"
+              style={{
+                padding: '7px 14px',
+                background: '#EF4444',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: 13,
+                outline: campaignStatus === 'cancelled' ? '2px solid #DC2626' : 'none',
+              }}
+              onClick={() => handleCampaignAction('cancel')}
+              title="Cancel or end the campaign"
+            >
+              ⏹ Cancel Campaign
+            </button>
+          </div>
+
           <button
             type="button"
             style={{
               padding: '7px 14px',
-              background: '#10B981',
+              background: '#2B1B2E',
               color: '#fff',
               border: 'none',
               borderRadius: 4,
@@ -362,64 +448,26 @@ export const AdminPage: React.FC = () => {
               cursor: 'pointer',
               fontSize: 13,
             }}
-            onClick={() => handleCampaignAction('start')}
-            title="Start campaign immediately (live for customers)"
+            onClick={handleResetPlayers}
+            title="Clear all test players and reset counts to 0"
           >
-            ▶ Start Campaign
-          </button>
-          <button
-            type="button"
-            style={{
-              padding: '7px 14px',
-              background: '#F59E0B',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-            onClick={() => handleCampaignAction('pause')}
-            title="Temporarily pause spinning for customers"
-          >
-            ⏸ Pause Campaign
-          </button>
-          <button
-            type="button"
-            style={{
-              padding: '7px 14px',
-              background: '#EF4444',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-            onClick={() => handleCampaignAction('cancel')}
-            title="Cancel or end the campaign"
-          >
-            ⏹ Cancel Campaign
+            ↺ Reset Total Players
           </button>
         </div>
 
-        <button
-          type="button"
-          style={{
-            padding: '7px 14px',
-            background: '#2B1B2E',
-            color: '#fff',
-            border: 'none',
+        {campaignActionMsg && (
+          <div style={{
+            padding: '8px 12px',
             borderRadius: 4,
-            fontWeight: 'bold',
-            cursor: 'pointer',
             fontSize: 13,
-          }}
-          onClick={handleResetPlayers}
-          title="Clear all test players and reset counts to 0"
-        >
-          ↺ Reset Total Players
-        </button>
+            fontWeight: 600,
+            backgroundColor: campaignActionMsg.type === 'success' ? '#DCFCE7' : '#FEE2E2',
+            color: campaignActionMsg.type === 'success' ? '#166534' : '#991B1B',
+            border: `1px solid ${campaignActionMsg.type === 'success' ? '#86EFAC' : '#FCA5A5'}`,
+          }}>
+            {campaignActionMsg.text}
+          </div>
+        )}
       </div>
 
       {/* Tabs */}

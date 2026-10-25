@@ -27,10 +27,21 @@ import {
 export default async function handler(req: any, res: any) {
   // Extract action from query or url
   let action = req.query?.action;
-  if (!action && req.url) {
+  if ((!action || action === '[action]') && req.url) {
     const cleanUrl = req.url.split('?')[0];
     const parts = cleanUrl.split('/').filter(Boolean);
-    action = parts[parts.length - 1];
+    const last = parts[parts.length - 1];
+    if (last && last !== '[action]') {
+      action = last;
+    }
+  }
+  if ((!action || action === '[action]') && req.headers?.['x-matched-path']) {
+    const matched = (req.headers['x-matched-path'] as string).split('?')[0];
+    const parts = matched.split('/').filter(Boolean);
+    const last = parts[parts.length - 1];
+    if (last && last !== '[action]') {
+      action = last;
+    }
   }
 
   const rawIp = getClientIp(req);
@@ -125,6 +136,7 @@ export default async function handler(req: any, res: any) {
       { count: totalWinners },
       { count: blockedCount },
       { data: recentEvents },
+      { data: settingsRow },
     ] = await Promise.all([
       db.from('players').select('*', { count: 'exact', head: true }),
       db.from('spins').select('*', { count: 'exact', head: true }),
@@ -132,7 +144,24 @@ export default async function handler(req: any, res: any) {
       db.from('coupons').select('*', { count: 'exact', head: true }),
       db.from('blocked_attempts').select('*', { count: 'exact', head: true }),
       db.from('events').select('*').order('created_at', { ascending: false }).limit(50),
+      db.from('settings').select('*').eq('id', 1).maybeSingle(),
     ]);
+
+    let campaignStatus: 'live' | 'paused' | 'cancelled' | 'scheduled' = 'live';
+    if (settingsRow) {
+      const sTime = new Date(settingsRow.start_at);
+      const eTime = settingsRow.end_at ? new Date(settingsRow.end_at) : null;
+      const nTime = new Date();
+      if (sTime.getFullYear() >= 2090) {
+        campaignStatus = 'paused';
+      } else if (eTime && nTime > eTime) {
+        campaignStatus = 'cancelled';
+      } else if (nTime < sTime) {
+        campaignStatus = 'scheduled';
+      } else {
+        campaignStatus = 'live';
+      }
+    }
 
     const winsPerOffer = (offersData || []).map((o: any) => ({
       slot: o.slot,
@@ -146,6 +175,7 @@ export default async function handler(req: any, res: any) {
       totalPlayers: totalPlayers || 0,
       totalSpins: totalSpins || 0,
       totalWinners: totalWinners || 0,
+      campaignStatus,
       winsPerOffer,
       blockedCount: blockedCount || 0,
       recentEvents: recentEvents || [],
@@ -530,11 +560,12 @@ export default async function handler(req: any, res: any) {
     }
 
     if (cmd === 'pause') {
-      // Set start_at far in future to immediately pause the campaign for all customers
+      // Set start_at far in future and end_at to null to immediately pause the campaign
       const { error } = await db
         .from('settings')
         .update({
           start_at: '2099-01-01T00:00:00Z',
+          end_at: null,
           updated_at: nowIso,
         })
         .eq('id', 1);
@@ -554,10 +585,11 @@ export default async function handler(req: any, res: any) {
     }
 
     if (cmd === 'cancel') {
-      // Set end_at to now to immediately end the campaign
+      // Set end_at to now and start_at in past to immediately end the campaign
       const { error } = await db
         .from('settings')
         .update({
+          start_at: '2020-01-01T00:00:00Z',
           end_at: nowIso,
           updated_at: nowIso,
         })

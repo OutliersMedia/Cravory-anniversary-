@@ -101,14 +101,14 @@ export default async function handler(req: any, res: any) {
   const endTime = settings.end_at ? new Date(settings.end_at) : null;
 
   function calculatePhase(player: any): GamePhase {
-    if (!isTestMode) {
-      if ((settings as any).campaign_status === 'paused' || startTime.getFullYear() >= 2090) {
-        return 'paused';
-      }
-      if ((settings as any).campaign_status === 'cancelled' || (endTime && now > endTime)) {
-        return 'ended';
-      }
-      if (now < startTime) return 'before_start';
+    if (startTime.getFullYear() >= 2090) {
+      return 'paused';
+    }
+    if (endTime && now > endTime) {
+      return 'ended';
+    }
+    if (now < startTime) {
+      return 'before_start';
     }
     if (player.status === 'won' || player.status === 'lost' || player.spins_used >= 2) {
       return 'played';
